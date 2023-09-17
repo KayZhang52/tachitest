@@ -175,6 +175,34 @@ class BangumiApi(private val client: OkHttpClient, interceptor: BangumiIntercept
             .build(),
     )
 
+    /**
+     *  Check that access token user gave is valid
+     */
+    suspend fun checkPersonalToken(code:String): Int {
+        return withIOContext {
+            val response = authClient.newCall(
+                GET(
+                    "$apiUrl/v0/me",
+                ),
+            ).awaitSuccess()
+            val responseBody = response.body.string()
+            if (responseBody.isEmpty()) {
+                throw Exception("Null Response")
+            }
+            if (response.code != 200) {
+                throw Exception("Failed  Response")
+            } else {
+                var id:Int = -1
+                json.decodeFromString<User>(responseBody).let {
+                    id = it.id!!
+                }
+                if(id == -1) throw Exception("Failed Response")
+                id
+            }
+        }
+    }
+
+
     companion object {
         private const val clientId = "bgm10555cda0762e80ca"
         private const val clientSecret = "8fff394a8627b4c388cbf349ec865775"

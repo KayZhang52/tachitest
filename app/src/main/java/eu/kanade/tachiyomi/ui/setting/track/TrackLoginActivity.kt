@@ -9,7 +9,6 @@ class TrackLoginActivity : BaseOAuthLoginActivity() {
     override fun handleResult(data: Uri?) {
         when (data?.host) {
             "anilist-auth" -> handleAnilist(data)
-            "bangumi-auth" -> handleBangumi(data)
             "myanimelist-auth" -> handleMyAnimeList(data)
             "shikimori-auth" -> handleShikimori(data)
         }
@@ -33,7 +32,7 @@ class TrackLoginActivity : BaseOAuthLoginActivity() {
         val code = data.getQueryParameter("code")
         if (code != null) {
             lifecycleScope.launchIO {
-                trackManager.bangumi.login(code)
+                trackManager.bangumi.login(code,"0")
                 returnToSettings()
             }
         } else {

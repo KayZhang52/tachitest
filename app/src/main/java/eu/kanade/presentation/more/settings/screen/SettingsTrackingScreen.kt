@@ -95,6 +95,13 @@ object SettingsTrackingScreen : SearchableSettings {
                         onDismissRequest = { dialog = null },
                     )
                 }
+                is BangumiLoginDialog ->{
+                    TrackingLoginDialogForBangumi(
+                        service = service,
+                        uNameStringRes = uNameStringRes,
+                        onDismissRequest = { dialog = null }
+                    )
+                }
                 is LogoutDialog -> {
                     TrackingLogoutDialog(
                         service = service,
@@ -160,7 +167,7 @@ object SettingsTrackingScreen : SearchableSettings {
                     Preference.PreferenceItem.TrackingPreference(
                         title = trackManager.bangumi.name,
                         service = trackManager.bangumi,
-                        login = { context.openInBrowser(BangumiApi.authUrl(), forceDefaultBrowser = true) },
+                        login = { dialog = BangumiLoginDialog(trackManager.bangumi, R.string.username);  },
                         logout = { dialog = LogoutDialog(trackManager.bangumi) },
                     ),
                     Preference.PreferenceItem.InfoPreference(stringResource(R.string.tracking_info)),
@@ -281,6 +288,96 @@ object SettingsTrackingScreen : SearchableSettings {
         )
     }
 
+    /**
+     *  Dialog for Bangumi Tracking, user need to directly enter access token.
+     */
+    @Composable
+    private fun TrackingLoginDialogForBangumi(
+        service: TrackService,
+        @StringRes uNameStringRes: Int,
+        onDismissRequest: () -> Unit,
+    ) {
+        val context = LocalContext.current
+        val scope = rememberCoroutineScope()
+
+        var accessToken by remember { mutableStateOf(TextFieldValue("")) }
+        var expiresIn by remember { mutableStateOf(TextFieldValue("")) }
+        var expanded by remember { mutableStateOf(false) }
+        var processing by remember { mutableStateOf(false) }
+        var inputError by remember { mutableStateOf(false) }
+
+
+        AlertDialog(
+            onDismissRequest = onDismissRequest,
+            title = {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Text(
+                        text = "Enter access token for Bangumi",
+                        modifier = Modifier.weight(1f),
+                    )
+                    IconButton(onClick = onDismissRequest) {
+                        Icon(
+                            imageVector = Icons.Outlined.Close,
+                            contentDescription = stringResource(R.string.action_close),
+                        )
+                    }
+                }
+            },
+            text = {
+                Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                    OutlinedTextField(
+                        modifier = Modifier.fillMaxWidth(),
+                        value = accessToken,
+                        onValueChange = { accessToken = it },
+                        label = { Text(text = "access token") },
+                        visualTransformation = VisualTransformation.None,
+                        keyboardOptions = KeyboardOptions(
+                            keyboardType = KeyboardType.Text,
+                            imeAction = ImeAction.Done,
+                        ),
+                        singleLine = true,
+                        isError = inputError && !processing,
+                    )
+                    OutlinedTextField(
+                        modifier = Modifier.fillMaxWidth(),
+                        value = expiresIn,
+                        onValueChange = { expiresIn = it },
+                        label = { Text(text = "days to expiry") },
+                        visualTransformation = VisualTransformation.None,
+                        keyboardOptions = KeyboardOptions(
+                            keyboardType = KeyboardType.Number,
+                            imeAction = ImeAction.Done,
+                        ),
+                        singleLine = true,
+                        isError = inputError && !processing,
+                    )
+                }
+            },
+            confirmButton = {
+                Button(
+                    modifier = Modifier.fillMaxWidth(),
+                    enabled = !processing && accessToken.text.isNotBlank(),
+                    onClick = {
+                        scope.launchIO {
+                            processing = true
+                            val result = checkLogin(
+                                context = context,
+                                service = service,
+                                username = accessToken.text,
+                                password = expiresIn.text,
+                            )
+                            inputError = !result
+                            if (result) onDismissRequest()
+                            processing = false
+                        }
+                    },
+                ) {
+                    val id = if (processing) R.string.loading else R.string.login
+                    Text(text = stringResource(id))
+                }
+            },
+        )
+    }
     private suspend fun checkLogin(
         context: Context,
         service: TrackService,
@@ -342,6 +439,11 @@ object SettingsTrackingScreen : SearchableSettings {
 }
 
 private data class LoginDialog(
+    val service: TrackService,
+    @StringRes val uNameStringRes: Int,
+)
+
+private data class BangumiLoginDialog(
     val service: TrackService,
     @StringRes val uNameStringRes: Int,
 )

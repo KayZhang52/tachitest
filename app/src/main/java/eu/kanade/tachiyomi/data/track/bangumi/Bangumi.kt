@@ -105,13 +105,21 @@ class Bangumi(id: Long) : TrackService(id, "Bangumi") {
 
     override fun getCompletionStatus(): Int = COMPLETED
 
-    override suspend fun login(username: String, password: String) = login(password)
+    override suspend fun login(username: String, password: String) = login(username, password.toLong())
 
-    suspend fun login(code: String) {
-        try {
-            val oauth = api.accessToken(code)
+    suspend fun login(code:String, expiresIn:Long){
+        try{
+            val oauth = OAuth(
+                access_token = code,
+                token_type = "",
+                expires_in = expiresIn * 86400000,
+                refresh_token = null,
+                user_id = id
+            )
             interceptor.newAuth(oauth)
+            val id = api.checkPersonalToken(code).toLong()
             saveCredentials(oauth.user_id.toString(), oauth.access_token)
+            saveToken(oauth)
         } catch (e: Throwable) {
             logout()
         }
