@@ -43,6 +43,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import eu.kanade.domain.track.service.TrackPreferences
 import eu.kanade.presentation.more.settings.Preference
+import eu.kanade.presentation.more.settings.widget.InfoWidget
 import eu.kanade.tachiyomi.R
 import eu.kanade.tachiyomi.data.track.EnhancedTrackService
 import eu.kanade.tachiyomi.data.track.TrackManager
@@ -56,6 +57,7 @@ import eu.kanade.tachiyomi.util.system.toast
 import tachiyomi.core.util.lang.launchIO
 import tachiyomi.core.util.lang.withUIContext
 import tachiyomi.domain.source.service.SourceManager
+import tachiyomi.presentation.core.components.material.TextButton
 import tachiyomi.presentation.core.components.material.padding
 import uy.kohesive.injekt.Injekt
 import uy.kohesive.injekt.api.get
@@ -298,6 +300,7 @@ object SettingsTrackingScreen : SearchableSettings {
         onDismissRequest: () -> Unit,
     ) {
         val context = LocalContext.current
+        val uriHandler = LocalUriHandler.current
         val scope = rememberCoroutineScope()
 
         var accessToken by remember { mutableStateOf(TextFieldValue("")) }
@@ -351,6 +354,11 @@ object SettingsTrackingScreen : SearchableSettings {
                         singleLine = true,
                         isError = inputError && !processing,
                     )
+                    TextButton(
+                        onClick = {
+                            uriHandler.openUri("https://next.bgm.tv/demo/access-token") }) {
+                        Text(text = "Generate a token in Bangumi.")
+                    }
                 }
             },
             confirmButton = {
