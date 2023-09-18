@@ -20,7 +20,7 @@ android {
     namespace = "eu.kanade.tachiyomi"
 
     defaultConfig {
-        applicationId = "eu.kanade.tachiyomi_bangumi_tracker_expiry"
+        applicationId = "eu.kanade.tachiyomi"
 
         versionCode = 105
         versionName = "0.14.6"
